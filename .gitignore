@@ -1,0 +1,13 @@
+PRD.md
+.env
+.env.*
+!.env.example
+node_modules/
+dist/
+coverage/
+bin/
+*.test
+*.out
+.idea/
+.vscode/
+.DS_Store
