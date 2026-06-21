@@ -15,27 +15,35 @@ interface Props {
 
 export default function Player({ video }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
-  useHls(video.m3u8_url, videoRef)
+  const { hlsRef, levels } = useHls(video.m3u8_url, videoRef)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
+  const [currentLevel, setCurrentLevel] = useState(-1)
+
   const isLive = duration === Infinity
 
+  // Reset on video change
+  useEffect(() => {
+    setIsPlaying(false)
+    setCurrentTime(0)
+    setDuration(0)
+    setCurrentLevel(-1)
+  }, [video.id])
+
+  // Video element events
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
-
     const onPlay = () => setIsPlaying(true)
     const onPause = () => setIsPlaying(false)
     const onTimeUpdate = () => setCurrentTime(el.currentTime)
     const onDurationChange = () => setDuration(el.duration)
-
     el.addEventListener('play', onPlay)
     el.addEventListener('pause', onPause)
     el.addEventListener('timeupdate', onTimeUpdate)
     el.addEventListener('durationchange', onDurationChange)
-
     return () => {
       el.removeEventListener('play', onPlay)
       el.removeEventListener('pause', onPause)
@@ -57,14 +65,23 @@ export default function Player({ video }: Props) {
     el.currentTime = Number(e.target.value)
   }, [])
 
+  const selectQuality = useCallback((index: number) => {
+    const hls = hlsRef.current
+    if (!hls) return
+    hls.currentLevel = index
+    setCurrentLevel(index)
+  }, [hlsRef])
+
   return (
     <div className="player-container">
       <video ref={videoRef} className="player-video" />
       <div className="player-controls">
+        {/* Play/Pause */}
         <button className="ctrl-btn" onClick={togglePlay} aria-label={isPlaying ? 'Пауза' : 'Воспроизвести'}>
           {isPlaying ? '⏸' : '▶'}
         </button>
 
+        {/* Progress bar */}
         <div className="progress-wrap">
           <input
             type="range"
@@ -78,9 +95,24 @@ export default function Player({ video }: Props) {
           />
         </div>
 
+        {/* Time display */}
         <span className="time-display">
           {isLive ? 'LIVE' : `${formatTime(currentTime)} / ${formatTime(duration)}`}
         </span>
+
+        {/* Quality selector — shown only for multi-bitrate streams */}
+        {levels.length > 1 && (
+          <select
+            className="quality-select"
+            value={currentLevel}
+            onChange={(e) => selectQuality(Number(e.target.value))}
+          >
+            <option value={-1}>Auto</option>
+            {levels.map((l) => (
+              <option key={l.index} value={l.index}>{l.label}</option>
+            ))}
+          </select>
+        )}
       </div>
     </div>
   )

@@ -1,11 +1,19 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Hls from 'hls.js'
+
+export interface HlsLevel {
+  index: number
+  label: string
+}
 
 export function useHls(src: string | null, videoRef: React.RefObject<HTMLVideoElement | null>) {
   const hlsRef = useRef<Hls | null>(null)
+  const [levels, setLevels] = useState<HlsLevel[]>([])
 
   useEffect(() => {
     const video = videoRef.current
+    setLevels([])
+
     if (!video || !src) return
 
     if (Hls.isSupported()) {
@@ -13,9 +21,19 @@ export function useHls(src: string | null, videoRef: React.RefObject<HTMLVideoEl
       hlsRef.current = hls
       hls.loadSource(src)
       hls.attachMedia(video)
+
+      hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
+        const lvls: HlsLevel[] = data.levels.map((l, i) => ({
+          index: i,
+          label: l.height ? `${l.height}p` : `${Math.round(l.bitrate / 1000)}k`,
+        }))
+        setLevels(lvls)
+      })
+
       return () => {
         hls.destroy()
         hlsRef.current = null
+        setLevels([])
       }
     }
 
@@ -28,5 +46,5 @@ export function useHls(src: string | null, videoRef: React.RefObject<HTMLVideoEl
     }
   }, [src, videoRef])
 
-  return hlsRef
+  return { hlsRef, levels }
 }
