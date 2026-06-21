@@ -1,1 +1,9 @@
-
+.git
+.github
+bin
+coverage
+tmp
+*.test
+*.out
+internal/openapi/gen
+internal/repo/postgres/sqlc

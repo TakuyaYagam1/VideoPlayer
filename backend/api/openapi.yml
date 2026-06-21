@@ -1,0 +1,191 @@
+openapi: 3.0.3
+info:
+  title: IfBest Video Player API
+  version: 1.0.0
+servers:
+  - url: /
+paths:
+  /healthz:
+    get:
+      operationId: healthz
+      summary: Liveness check
+      responses:
+        "200":
+          description: Service is alive
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ok
+  /readyz:
+    get:
+      operationId: readyz
+      summary: Readiness check
+      responses:
+        "200":
+          description: Service is ready
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: ready
+        "503":
+          description: Service is not ready
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: not ready
+  /api/v1/videos:
+    get:
+      operationId: listVideos
+      summary: List available videos
+      responses:
+        "200":
+          description: Video list
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Video"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/videos/{id}:
+    get:
+      operationId: getVideo
+      summary: Get one video
+      parameters:
+        - $ref: "#/components/parameters/VideoID"
+      responses:
+        "200":
+          description: Video
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Video"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/VideoNotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+  /api/v1/videos/{id}/views:
+    post:
+      operationId: recordVideoView
+      summary: Record one idempotent video view
+      parameters:
+        - $ref: "#/components/parameters/VideoID"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RecordViewRequest"
+      responses:
+        "200":
+          description: View counter result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RecordViewResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/VideoNotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+components:
+  parameters:
+    VideoID:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    VideoNotFound:
+      description: Video not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorEnvelope"
+  schemas:
+    Video:
+      type: object
+      required:
+        - id
+        - title
+        - m3u8_url
+        - views
+      properties:
+        id:
+          type: string
+          format: uuid
+        title:
+          type: string
+        m3u8_url:
+          type: string
+          format: uri
+        views:
+          type: integer
+          format: int64
+          minimum: 0
+    RecordViewRequest:
+      type: object
+      required:
+        - view_session_id
+      properties:
+        view_session_id:
+          type: string
+          minLength: 1
+          maxLength: 128
+    RecordViewResponse:
+      type: object
+      required:
+        - video_id
+        - views
+        - counted
+      properties:
+        video_id:
+          type: string
+          format: uuid
+        views:
+          type: integer
+          format: int64
+          minimum: 0
+        counted:
+          type: boolean
+    ErrorEnvelope:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          $ref: "#/components/schemas/APIError"
+    APIError:
+      type: object
+      required:
+        - code
+        - message
+        - request_id
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        request_id:
+          type: string

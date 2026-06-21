@@ -1,0 +1,76 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18-alpine
+        env:
+          POSTGRES_DB: ifbest_video_player
+          POSTGRES_USER: ifbest
+          POSTGRES_PASSWORD: ifbest
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ifbest -d ifbest_video_player"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: backend/go.mod
+          cache-dependency-path: backend/go.sum
+      - run: go mod tidy
+      - run: git diff --exit-code -- go.mod go.sum
+      - run: make generate
+      - run: make fmt-check
+      - run: make lint
+      - run: make test
+      - run: make migrate
+        env:
+          DATABASE_URL: postgres://ifbest:ifbest@localhost:5432/ifbest_video_player?sslmode=disable
+
+  compose-smoke:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - run: docker compose -f deployment/docker/docker-compose.yml up -d --build
+      - run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost/healthz && curl -fsS http://localhost/api/v1/videos; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f deployment/docker/docker-compose.yml logs
+          exit 1
+      - if: always()
+        run: docker compose -f deployment/docker/docker-compose.yml down -v
