@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base, AsyncSessionLocal
 from seed import seed_videos
+from router import router
 
 
 @asynccontextmanager
@@ -23,7 +24,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-@app.get("/api/health")
-async def health():
-    return {"status": "ok"}
+app.include_router(router)
