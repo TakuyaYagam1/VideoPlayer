@@ -15,6 +15,7 @@ interface Props {
 
 export default function Player({ video }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const { hlsRef, levels } = useHls(video.m3u8_url, videoRef)
 
   const [isPlaying, setIsPlaying] = useState(false)
@@ -22,6 +23,7 @@ export default function Player({ video }: Props) {
   const [duration, setDuration] = useState(0)
   const [currentLevel, setCurrentLevel] = useState(-1)
   const [playbackRate, setPlaybackRate] = useState(1)
+  const [isFullscreen, setIsFullscreen] = useState(false)
 
   const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
@@ -34,6 +36,13 @@ export default function Player({ video }: Props) {
     setDuration(0)
     setCurrentLevel(-1)
   }, [video.id])
+
+  // Fullscreen state sync
+  useEffect(() => {
+    const onChange = () => setIsFullscreen(!!document.fullscreenElement)
+    document.addEventListener('fullscreenchange', onChange)
+    return () => document.removeEventListener('fullscreenchange', onChange)
+  }, [])
 
   // Video element events
   useEffect(() => {
@@ -82,8 +91,21 @@ export default function Player({ video }: Props) {
     setPlaybackRate(rate)
   }, [])
 
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current
+    if (!el) return
+    if (!document.fullscreenElement) {
+      el.requestFullscreen?.()
+      // Safari
+      ;(el as HTMLDivElement & { webkitRequestFullscreen?: () => void }).webkitRequestFullscreen?.()
+    } else {
+      document.exitFullscreen?.()
+      ;(document as Document & { webkitExitFullscreen?: () => void }).webkitExitFullscreen?.()
+    }
+  }, [])
+
   return (
-    <div className="player-container">
+    <div ref={containerRef} className="player-container">
       <video ref={videoRef} className="player-video" />
       <div className="player-controls">
         {/* Play/Pause */}
@@ -134,6 +156,11 @@ export default function Player({ video }: Props) {
             <option key={r} value={r}>{r}x</option>
           ))}
         </select>
+
+        {/* Fullscreen */}
+        <button className="ctrl-btn" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Выйти из полноэкранного' : 'Полноэкранный режим'}>
+          {isFullscreen ? '⛶' : '⛶'}
+        </button>
       </div>
     </div>
   )
