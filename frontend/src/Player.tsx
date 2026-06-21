@@ -21,6 +21,9 @@ export default function Player({ video }: Props) {
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [currentLevel, setCurrentLevel] = useState(-1)
+  const [playbackRate, setPlaybackRate] = useState(1)
+
+  const RATES = [0.5, 0.75, 1, 1.25, 1.5, 2]
 
   const isLive = duration === Infinity
 
@@ -72,6 +75,13 @@ export default function Player({ video }: Props) {
     setCurrentLevel(index)
   }, [hlsRef])
 
+  const selectRate = useCallback((rate: number) => {
+    const el = videoRef.current
+    if (!el) return
+    el.playbackRate = rate
+    setPlaybackRate(rate)
+  }, [])
+
   return (
     <div className="player-container">
       <video ref={videoRef} className="player-video" />
@@ -113,6 +123,17 @@ export default function Player({ video }: Props) {
             ))}
           </select>
         )}
+
+        {/* Playback speed */}
+        <select
+          className="speed-select"
+          value={playbackRate}
+          onChange={(e) => selectRate(Number(e.target.value))}
+        >
+          {RATES.map((r) => (
+            <option key={r} value={r}>{r}x</option>
+          ))}
+        </select>
       </div>
     </div>
   )
