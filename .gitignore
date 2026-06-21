@@ -11,3 +11,9 @@ bin/
 .idea/
 .vscode/
 .DS_Store
+
+# Python
+python-backend/venv/
+__pycache__/
+*.pyc
+*.db
