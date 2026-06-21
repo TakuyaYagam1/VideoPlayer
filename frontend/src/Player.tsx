@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from 'react'
 import { useHls } from './useHls'
+import { recordView } from './api'
 import type { Video } from './types'
 
 function formatTime(sec: number): string {
@@ -11,12 +12,14 @@ function formatTime(sec: number): string {
 
 interface Props {
   video: Video
+  onViewRecorded?: (views: number) => void
 }
 
-export default function Player({ video }: Props) {
+export default function Player({ video, onViewRecorded }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const { hlsRef, levels } = useHls(video.m3u8_url, videoRef)
+  const viewRecorded = useRef(false)
 
   const [isPlaying, setIsPlaying] = useState(false)
   const [currentTime, setCurrentTime] = useState(0)
@@ -31,6 +34,7 @@ export default function Player({ video }: Props) {
 
   // Reset on video change
   useEffect(() => {
+    viewRecorded.current = false
     setIsPlaying(false)
     setCurrentTime(0)
     setDuration(0)
@@ -48,7 +52,13 @@ export default function Player({ video }: Props) {
   useEffect(() => {
     const el = videoRef.current
     if (!el) return
-    const onPlay = () => setIsPlaying(true)
+    const onPlay = () => {
+      setIsPlaying(true)
+      if (!viewRecorded.current) {
+        viewRecorded.current = true
+        recordView(video.id).then((r) => onViewRecorded?.(r.views)).catch(() => {})
+      }
+    }
     const onPause = () => setIsPlaying(false)
     const onTimeUpdate = () => setCurrentTime(el.currentTime)
     const onDurationChange = () => setDuration(el.duration)
