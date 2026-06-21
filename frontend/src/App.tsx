@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import VideoList from './VideoList'
+import Player from './Player'
 import type { Video } from './types'
 
 export default function App() {
@@ -11,13 +12,8 @@ export default function App() {
         <h1>IfBest Video Player</h1>
       </header>
       <main className="app-main">
+        {selected && <Player video={selected} />}
         <VideoList onSelect={setSelected} selectedId={selected?.id} />
-        {selected && (
-          <div className="player-placeholder">
-            <p>Выбрано: {selected.title}</p>
-            <p>{selected.m3u8_url}</p>
-          </div>
-        )}
       </main>
     </div>
   )
