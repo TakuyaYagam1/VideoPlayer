@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>IfBest Video Player</title>
+    <link rel="stylesheet" href="/src/styles/catalog.css" />
+    <link rel="stylesheet" href="/src/styles/player.css" />
+    <link rel="stylesheet" href="/src/styles/controls.css" />
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="brand" href="/" data-link>
+        <span class="brand__text">IfBest</span>
+        <span class="brand__mark">B</span>
+      </a>
+      <span class="site-header__label">Видео</span>
+    </header>
+
+    <main id="app" class="app-shell"></main>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@1/dist/hls.min.js"></script>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

@@ -1,13 +1,12 @@
 import { createVideoList } from './video-list.js';
+import { listVideos } from '../../api/videos.js';
 
-export async function renderCatalogPage() {
-    const root = document.getElementById('app');
-
-    root.innerHTML = `
+export async function renderCatalogPage({ app, navigate }) {
+    app.innerHTML = `
         <div class="catalog-page">
             <div class="catalog-page__header">
-                <h1>Корпоративная видеотека IfBest</h1>
-                <p>Обучающие видео, инструкции и записи совещаний</p>
+                <p class="eyebrow">Видео</p>
+                <h1>Главная</h1>
             </div>
             <div class="catalog-page__content" id="catalog-content">
                 <p class="catalog-page__loading">Загрузка видео...</p>
@@ -18,13 +17,31 @@ export async function renderCatalogPage() {
     const content = document.getElementById('catalog-content');
 
     try {
-        const response = await fetch('/api/videos');
-        const videos = await response.json();
-        const list = createVideoList(videos);
+        const videos = await listVideos();
+        const list = createVideoList(videos, navigate);
         content.innerHTML = '';
         content.appendChild(list);
     } catch (error) {
-        content.innerHTML = '<p class="catalog-page__error">Ошибка загрузки видео</p>';
+        content.innerHTML = '';
+        content.appendChild(createCatalogError(error.message));
         console.error('Ошибка загрузки:', error);
     }
+}
+
+function createCatalogError(message) {
+    const section = document.createElement('section');
+    section.className = 'empty-state';
+
+    const eyebrow = document.createElement('p');
+    eyebrow.className = 'eyebrow';
+    eyebrow.textContent = 'Ошибка';
+
+    const title = document.createElement('h2');
+    title.textContent = 'Не удалось загрузить список видео';
+
+    const details = document.createElement('p');
+    details.textContent = message;
+
+    section.append(eyebrow, title, details);
+    return section;
 }

@@ -12,7 +12,9 @@ export default [
         crypto: "readonly",
         document: "readonly",
         fetch: "readonly",
+        Intl: "readonly",
         location: "readonly",
+        URL: "readonly",
         URLSearchParams: "readonly",
         window: "readonly"
       }

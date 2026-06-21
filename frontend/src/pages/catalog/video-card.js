@@ -1,6 +1,29 @@
-export function createVideoCard(video) {
-    const card = document.createElement('div');
-    card.className = 'video-card';
+export function createVideoCard(video, { isFeatured, onOpen }) {
+    const card = document.createElement('article');
+    card.className = isFeatured ? 'video-card video-card--featured' : 'video-card';
+
+    const preview = document.createElement('button');
+    preview.className = 'video-card__preview';
+    preview.type = 'button';
+    preview.setAttribute('aria-label', `Открыть видео ${video.title}`);
+    preview.addEventListener('click', onOpen);
+
+    if (video.preview_url) {
+        const image = document.createElement('img');
+        image.className = 'video-card__image';
+        image.src = video.preview_url;
+        image.alt = '';
+        image.loading = 'lazy';
+        image.decoding = 'async';
+        image.addEventListener('error', () => image.remove());
+        preview.appendChild(image);
+    }
+
+    const playIcon = document.createElement('span');
+    playIcon.className = 'video-card__play';
+    playIcon.textContent = '▶';
+
+    preview.appendChild(playIcon);
 
     const title = document.createElement('h3');
     title.className = 'video-card__title';
@@ -8,16 +31,15 @@ export function createVideoCard(video) {
 
     const views = document.createElement('p');
     views.className = 'video-card__views';
-    views.innerHTML = `Просмотров: <span>${video.views}</span>`;
+    views.textContent = `${video.views} просмотров`;
 
-    const link = document.createElement('a');
+    const link = document.createElement('button');
     link.className = 'video-card__btn';
-    link.href = `/player?id=${video.id}`;
+    link.type = 'button';
     link.textContent = 'Смотреть';
+    link.addEventListener('click', onOpen);
 
-    card.appendChild(title);
-    card.appendChild(views);
-    card.appendChild(link);
+    card.append(preview, title, views, link);
 
     return card;
 }
