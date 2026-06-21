@@ -168,8 +168,8 @@ export default function Player({ video, onViewRecorded }: Props) {
         </select>
 
         {/* Fullscreen */}
-        <button className="ctrl-btn" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Выйти из полноэкранного' : 'Полноэкранный режим'}>
-          {isFullscreen ? '⛶' : '⛶'}
+        <button className="ctrl-btn" onClick={toggleFullscreen} aria-label={isFullscreen ? 'Свернуть' : 'На весь экран'}>
+          {isFullscreen ? '✕FS' : '⤢'}
         </button>
       </div>
     </div>
